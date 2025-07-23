@@ -46,3 +46,5 @@ target_link_libraries(raytracer PRIVATE
     PNG::PNG
 )
 
+target_compile_definitions(raytracer PRIVATE GLEW_NO_GLU)
+
