@@ -1,0 +1,6 @@
+[submodule "3rdparty/visionaray"]
+	path = 3rdparty/visionaray
+	url = https://github.com/szellmann/visionaray.git
+[submodule "3rdparty/CmdLine"]
+	path = 3rdparty/CmdLine
+	url = https://github.com/abolz/CmdLine.git
