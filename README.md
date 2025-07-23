@@ -22,3 +22,6 @@ Options:
    -png=<ARG>             Output PNG filename
 ```
 
+Note: Files inside `common` subdirectory are copied from visionaray and
+slightly modified to reduce dependencies.
+
