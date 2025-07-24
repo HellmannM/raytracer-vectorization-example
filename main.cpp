@@ -6,14 +6,20 @@
 #include <iostream>
 #include <string>
 
-#include <visionaray/math/math.h>
 #include <visionaray/bvh.h>
+#include <visionaray/math/math.h>
+#include <visionaray/pinhole_camera.h>
+#include <common/make_materials.h>
 
 #include <common/timer.h>
 
 #include "renderer.h"
 
 using namespace visionaray;
+
+// forward declare helpers
+std::istream& operator>>(std::istream& in, pinhole_camera& cam);
+std::ostream& operator<<(std::ostream& out, pinhole_camera const& cam);
 
 //-------------------------------------------------------------------------------------------------
 // Main function, performs initialization
@@ -85,3 +91,28 @@ int main(int argc, char** argv)
 
     return EXIT_SUCCESS;
 }
+
+//-------------------------------------------------------------------------------------------------
+// I/O utility for camera lookat only - not fit for the general case!
+//
+
+std::istream& operator>>(std::istream& in, pinhole_camera& cam)
+{
+    vec3 eye;
+    vec3 center;
+    vec3 up;
+
+    in >> eye >> std::ws >> center >> std::ws >> up >> std::ws;
+    cam.look_at(eye, center, up);
+
+    return in;
+}
+
+std::ostream& operator<<(std::ostream& out, pinhole_camera const& cam)
+{
+    out << cam.eye() << '\n';
+    out << cam.center() << '\n';
+    out << cam.up() << '\n';
+    return out;
+}
+
