@@ -18,9 +18,6 @@ target_sources(raytracer PRIVATE
     common/file_base.cpp
     common/image.cpp
     common/image_base.cpp
-    common/model.cpp
-    common/obj_grammar.cpp
-    common/obj_loader.cpp
     common/pixel_format.cpp
     common/png_image.cpp
     common/sg.cpp
