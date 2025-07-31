@@ -93,7 +93,7 @@ void renderer<host_ray_type>::init(int argc, char** argv)
     std::vector<bvh_ref> bvhs{host_bvh.ref()};
     materials = mod.materials;
 
-    cam.look_at({0.0f, 2.5f, 7.0f}, {0.0f, 2.5f, 0.0f}, {0.0f, 1.0f, 0.0f});
+    cam.look_at({0.0f, 2.5f, 20.0f}, {0.0f, 5.0f, 0.0f}, {0.0f, 1.5f, 0.0f});
     resize(width, height);
 }
 
