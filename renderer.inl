@@ -5,10 +5,9 @@
 
 #include <visionaray/bvh.h>
 #include <visionaray/kernels.h>
-#include <visionaray/point_light.h>
+#include <visionaray/directional_light.h>
 #include <visionaray/sampling.h>
 #include <visionaray/scheduler.h>
-#include <visionaray/texture/texture.h>
 
 #include <common/image.h>
 #include <common/model.h>
@@ -89,11 +88,21 @@ void renderer<host_ray_type>::init(int argc, char** argv)
     host_sched.reset(this->num_threads);
 
     mod.build_snowman();
-    using bvh_ref = index_bvh<model::primitive_type>::bvh_ref;
-    std::vector<bvh_ref> bvhs{host_bvh.ref()};
+    std::cout << "Scene bbox min: " << mod.bbox.min << " max: " << mod.bbox.max << "\n";
+    for (unsigned i = 0; i < mod.primitives.size(); ++i)
+    {
+	    mod.primitives[i].prim_id = i;
+    }
+    
+    if (host_bvh.num_nodes() == 0)
+    {
+	    lbvh_builder builder;
+	    host_bvh = builder.build(index_bvh<model::primitive_type>{},mod.primitives.data(),mod.primitives.size());
+    }
+
     materials = mod.materials;
 
-    cam.look_at({0.0f, 2.5f, 20.0f}, {0.0f, 5.0f, 0.0f}, {0.0f, 1.5f, 0.0f});
+    cam.look_at({0.0f, 1.5f, 10.0f}, {0.0f, 2.5f, 0.0f}, {0.0f, 1.5f, 0.0f});
     resize(width, height);
 }
 
@@ -107,7 +116,7 @@ void renderer<host_ray_type>::resize(int w, int h)
     host_rt.clear_color_buffer();
 
     cam.set_viewport(0, 0, w, h);
-    cam.perspective(45.0f * constants::degrees_to_radians<float>(), float(w) / h, 0.1f, 100.0f);
+    cam.perspective(60.0f * constants::degrees_to_radians<float>(), float(w) / h, 0.1f, 100.0f);
 }
 
 template <typename host_ray_type>
@@ -122,25 +131,33 @@ void renderer<host_ray_type>::render()
 
     using bvh_ref = index_bvh<model::primitive_type>::bvh_ref;
     std::vector<bvh_ref> bvhs{host_bvh.ref()};
+    bvhs.push_back(host_bvh.ref());
 
-    point_light<float> light;
-    light.set_cl(vec3(1.0f, 1.0f, 1.0f));
-    light.set_position(cam.eye());
-    light.set_constant_attenuation(1.0f);
+    directional_light<float> sunlight;
+    sunlight.set_cl(vec3(1.0f, 1.0f, 1.0f));
+    sunlight.set_direction(normalize(vec3(-1.0f, -1.0f, -1.0f)));
+    std::vector<directional_light<float>> lights{sunlight};
 
-    std::vector<point_light<float>> lights{light};
+    vec3* dummies = nullptr;
+    aligned_vector<vec3> dummy_textures;
+
+    aligned_vector<index_bvh<basic_sphere<float>>::bvh_ref> refs;
+    refs.push_back(host_bvh.ref());
 
     auto kparams = make_kernel_params(
-        mod.primitives.data(),
-        mod.primitives.data() + mod.primitives.size(),
-        materials.data(),
-        lights.data(),
-        lights.data() + lights.size(),
-        4,                          // max bounces
-        0.001f,                     // self-intersection epsilon
-        vec4(0.7f, 0.8f, 1.0f, 1.0f),  // sky blue background
-        vec4(0.0f)
-    );
+            normals_per_face_binding{},
+	    mod.primitives.data(),
+            mod.primitives.data() + mod.primitives.size(),
+	    (vec3*)nullptr,
+	    (vec3*)nullptr,
+            materials.data(),
+            lights.data(),
+            lights.data() + lights.size(),
+            4,                          // number of reflective bounces
+            0.001f,                     // epsilon to avoid self intersection by secondary rays
+            vec4(0.8f, 0.6f, 0.8f, 1.0f),
+            vec4(1.0f)
+            );
 
     pathtracing::kernel<decltype(kparams)> kernel;
     kernel.params = kparams;
