@@ -39,30 +39,30 @@ struct model
         eye_mat.kd() = 1.0f;
         eye_mat.specular_exp() = 100.0f;
 
-	// material for floor
-	material_type floor_mat;
-	floor_mat.cd() = from_rgb(0.9f, 0.9f, 0.9f);
+        // material for floor
+        material_type floor_mat;
+        floor_mat.cd() = from_rgb(0.9f, 0.9f, 0.9f);
         floor_mat.ks() = 0.0f;
         floor_mat.kd() = 1.0f;
         floor_mat.specular_exp() = 10.0f;
 
         materials.push_back(white_mat); // material 0
         materials.push_back(eye_mat);   // material 1
-	materials.push_back(floor_mat); // material 2 
+        materials.push_back(floor_mat); // material 2 
 
 
         int prim_counter = 0;
         const float spacing = 4.0f;
         const float start_x = -((3 -1) * spacing) / 2.0f;
 
-	// Floor
-	vec3 floor_pos = {1.0f, -199.0f, 0.0f};
-	float floor_radius = 200.0f;
-	primitive_type floor_sphere(floor_pos, floor_radius);	
-	floor_sphere.prim_id = prim_counter++;
-	floor_sphere.geom_id = 2; // floor material
-	primitives.push_back(floor_sphere);
-	bbox.insert(aabb(floor_pos - floor_radius, floor_pos + floor_radius));
+        // Floor
+        vec3 floor_pos = {1.0f, -199.0f, 0.0f};
+        float floor_radius = 200.0f;
+        primitive_type floor_sphere(floor_pos, floor_radius);   
+        floor_sphere.prim_id = prim_counter++;
+        floor_sphere.geom_id = 2; // floor material
+        primitives.push_back(floor_sphere);
+        bbox.insert(aabb(floor_pos - floor_radius, floor_pos + floor_radius));
 
         for (int sn = 0; sn < 3; ++sn) // three snowmen
         {

@@ -91,13 +91,13 @@ void renderer<host_ray_type>::init(int argc, char** argv)
     std::cout << "Scene bbox min: " << mod.bbox.min << " max: " << mod.bbox.max << "\n";
     for (unsigned i = 0; i < mod.primitives.size(); ++i)
     {
-	    mod.primitives[i].prim_id = i;
+        mod.primitives[i].prim_id = i;
     }
     
     if (host_bvh.num_nodes() == 0)
     {
-	    lbvh_builder builder;
-	    host_bvh = builder.build(index_bvh<model::primitive_type>{},mod.primitives.data(),mod.primitives.size());
+        lbvh_builder builder;
+        host_bvh = builder.build(index_bvh<model::primitive_type>{},mod.primitives.data(),mod.primitives.size());
     }
 
     materials = mod.materials;
@@ -146,10 +146,10 @@ void renderer<host_ray_type>::render()
 
     auto kparams = make_kernel_params(
             normals_per_face_binding{},
-	    mod.primitives.data(),
+            mod.primitives.data(),
             mod.primitives.data() + mod.primitives.size(),
-	    (vec3*)nullptr,
-	    (vec3*)nullptr,
+            (vec3*)nullptr,
+            (vec3*)nullptr,
             materials.data(),
             lights.data(),
             lights.data() + lights.size(),
