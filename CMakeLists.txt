@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Boost CONFIG COMPONENTS filesystem iostreams system REQUIRED)
 find_package(PNG REQUIRED)
+find_package(MPI REQUIRED)
 
 add_executable(raytracer)
 
@@ -34,6 +35,7 @@ target_include_directories(raytracer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/..>
     ${Boost_INCLUDE_DIRS}
     ${PNG_INCLUDE_DIRS}
+    ${MPI_CXX_INCLUDE_DIRS}
 )
 
 target_link_libraries(raytracer PRIVATE
@@ -41,6 +43,7 @@ target_link_libraries(raytracer PRIVATE
     Boost::filesystem
     Boost::iostreams
     PNG::PNG
+    ${MPI_CXX_LIBRARIES}
 )
 
 target_compile_definitions(raytracer PRIVATE GLEW_NO_GLU)

@@ -102,7 +102,7 @@ void renderer<host_ray_type>::init(int argc, char** argv)
 
     materials = mod.materials;
 
-    cam.look_at({0.0f, 1.5f, 10.0f}, {0.0f, 2.5f, 0.0f}, {0.0f, 1.5f, 0.0f});
+    cam.look_at({0.0f, 10.5f, 10.0f}, {0.0f, 2.5f, 0.0f}, {0.0f, 1.5f, 0.0f});
     resize(width, height);
 }
 
@@ -135,7 +135,7 @@ void renderer<host_ray_type>::render()
 
     directional_light<float> sunlight;
     sunlight.set_cl(vec3(1.0f, 1.0f, 1.0f));
-    sunlight.set_direction(normalize(vec3(-1.0f, -1.0f, -1.0f)));
+    sunlight.set_direction(normalize(vec3(-1.0f, 1.0f, -1.0f)));
     std::vector<directional_light<float>> lights{sunlight};
 
     vec3* dummies = nullptr;
@@ -154,7 +154,7 @@ void renderer<host_ray_type>::render()
             lights.data(),
             lights.data() + lights.size(),
             4,                          // number of reflective bounces
-            0.001f,                     // epsilon to avoid self intersection by secondary rays
+            0.0001f,                     // epsilon to avoid self intersection by secondary rays
             vec4(0.8f, 0.6f, 0.8f, 1.0f),
             vec4(1.0f)
             );
