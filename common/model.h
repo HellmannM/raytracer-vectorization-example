@@ -24,32 +24,36 @@ struct model
         materials.clear();
         bbox.invalidate();
 
-        // White material for snowman body
-        material_type white_mat;
-        white_mat.cd() = from_rgb(1.0f, 1.0f, 1.0f);
-        white_mat.kd() = 1.0f;
-        white_mat.cs() = from_rgb(0.3f, 0.3f, 0.3f);
-        white_mat.ks() = 0.0f;
-        white_mat.specular_exp() = 50.0f;
+        material_type white;
+        white.ca() = from_rgb(0.0f, 0.0f, 0.0f);
+        white.cd() = from_rgb(1.0f, 1.0f, 1.0f);
+        white.cs() = from_rgb(1.0f, 1.0f, 1.0f);
+        white.ka() = 1.0f;
+        white.kd() = 1.0f;
+        white.ks() = 1.0f;
+        white.specular_exp() = 16.0f;
+        
+        material_type grey;
+        grey.ca() = from_rgb(0.5f, 0.5f, 0.5f);
+        grey.cd() = from_rgb(0.5f, 0.5f, 0.5f);
+        grey.cs() = from_rgb(0.5f, 0.5f, 0.5f);
+        grey.ka() = 1.0f;
+        grey.kd() = 1.0f;
+        grey.ks() = 1.0f;
+        grey.specular_exp() = 16.0f;
+        
+        material_type black;
+        black.ca() = from_rgb(0.0f, 0.0f, 0.0f);
+        black.cd() = from_rgb(0.0f, 0.0f, 0.0f);
+        black.cs() = from_rgb(0.0f, 0.0f, 0.0f);
+        black.ka() = 1.0f;
+        black.kd() = 1.0f;
+        black.ks() = 1.0f;
+        black.specular_exp() = 16.0f;
 
-        // Black material for eyes
-        material_type eye_mat;
-        eye_mat.cd() = from_rgb(0.0f, 0.0f, 0.0f);
-        eye_mat.ks() = 0.0f;
-        eye_mat.kd() = 1.0f;
-        eye_mat.specular_exp() = 100.0f;
-
-        // material for floor
-        material_type floor_mat;
-        floor_mat.cd() = from_rgb(0.9f, 0.9f, 0.9f);
-        floor_mat.ks() = 0.0f;
-        floor_mat.kd() = 1.0f;
-        floor_mat.specular_exp() = 10.0f;
-
-        materials.push_back(white_mat); // material 0
-        materials.push_back(eye_mat);   // material 1
-        materials.push_back(floor_mat); // material 2 
-
+        materials.push_back(white);
+        materials.push_back(black);
+        materials.push_back(grey);
 
         int prim_counter = 0;
         const float spacing = 4.0f;
