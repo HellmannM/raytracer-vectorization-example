@@ -8,7 +8,8 @@ int main(int argc, char** argv)
 
     renderer<host_ray_type> rend;
     rend.init(argc, argv);
-    rend.render();
+    for (int i=0; i<3; ++i)
+        rend.render();
     rend.save_as_png();
 
     return 0;
