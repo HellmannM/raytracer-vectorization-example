@@ -16,7 +16,11 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    using host_ray_type = basic_ray<simd::float8>;
+    using host_ray_type = basic_ray<float>;
+    //using host_ray_type = basic_ray<simd::float4>
+    //using host_ray_type = basic_ray<simd::float8>;
+    //using host_ray_type = basic_ray<simd::float16>
+
 
     renderer<host_ray_type> rend;
     rend.init(argc, argv);

@@ -5,7 +5,8 @@
 
 #include <visionaray/bvh.h>
 #include <visionaray/kernels.h>
-#include <visionaray/directional_light.h>
+//#include <visionaray/directional_light.h>
+#include <visionaray/point_light.h>
 #include <visionaray/sampling.h>
 #include <visionaray/scheduler.h>
 
@@ -61,6 +62,16 @@ renderer<host_ray_type>::renderer()
         cl::ArgRequired,
         cl::init(this->spp)
     ));
+#ifdef __CUDACC__
+    using namespace support;
+    
+    add_cmdline_option( cl::makeOption<device_type&>({{ "cpu", CPU, "Rendering on the CPU" }, { "gpu", GPU, "Rendering on the GPU" },},
+	"device",
+        cl::Desc("Rendering device"),
+        cl::ArgRequired,
+        cl::init(this->dev_type)
+    ) );
+#endif
 }
 
 template <typename host_ray_type>
@@ -104,6 +115,16 @@ void renderer<host_ray_type>::init(int argc, char** argv)
 
     cam.look_at({0.0f, 10.5f, 10.0f}, {0.0f, 2.5f, 0.0f}, {0.0f, 1.5f, 0.0f});
     resize(width, height);
+
+#ifdef __CUDACC__
+    // Copy scene to GPU
+    device_spheres = mod.primitives;
+    device_materials = materials;
+
+    // Resize GPU render target
+    device_rt.resize(width, height);
+#endif
+
 }
 
 template <typename host_ray_type>
@@ -133,10 +154,24 @@ void renderer<host_ray_type>::render()
     std::vector<bvh_ref> bvhs{host_bvh.ref()};
     bvhs.push_back(host_bvh.ref());
 
-    directional_light<float> sunlight;
-    sunlight.set_cl(vec3(1.0f, 1.0f, 1.0f));
-    sunlight.set_direction(normalize(vec3(-1.0f, 1.0f, -1.0f)));
-    std::vector<directional_light<float>> lights{sunlight};
+    //directional_light<float> sunlight;
+    //sunlight.set_cl(vec3(1.0f, 1.0f, 1.0f));
+    //sunlight.set_direction(normalize(vec3(-1.0f, 1.0f, -1.0f)));
+    //std::vector<directional_light<float>> lights{sunlight};
+    
+    point_light<float> headlight;
+    headlight.set_cl(vec3(0.9f, 0.9f, 0.9f));
+    headlight.set_kl(0.3f);
+    vec3f dir = cam.center() - cam.eye();
+    vec3f back = -65.f * dir;
+    vec3f up = 50.f * cam.up();
+    vec3f side = 50.f * norm(dir) * cross(normalize(dir), cam.up());
+    vec3f pos = cam.eye() + back + up + side;
+    headlight.set_position(pos);
+    headlight.set_constant_attenuation(1.0f);
+    headlight.set_linear_attenuation(0.0f);
+    headlight.set_quadratic_attenuation(0.0f);
+    std::vector<point_light<float>> lights{headlight};
 
     vec3* dummies = nullptr;
     aligned_vector<vec3> dummy_textures;

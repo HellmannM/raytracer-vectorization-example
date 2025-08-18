@@ -18,6 +18,12 @@
 
 #include <common/model.h>
 
+#ifdef __CUDACC__
+#include <cuda_runtime_api.h>
+#include <thrust/device_vector.h>
+#include <common/gpu_buffer_rt.h>
+#endif
+
 namespace visionaray
 {
 
@@ -34,6 +40,13 @@ struct renderer
     aligned_vector<plastic<float>> materials;
     index_bvh<model::primitive_type> host_bvh;
 
+#ifdef __CUDACC__
+    gpu_buffer_rt<PF_RGBA8, PF_UNSPECIFIED, PF_RGBA32F> device_rt;
+    cuda_sched<device_ray_type> device_sched;
+    thrust::device_vector<basic_sphere<float>> device_spheres;
+    thrust::device_vector<plastic<float>> device_materials;
+#endif
+    
     std::string png_filename = "rendered_snowman.png";
 
     size_t width = 512;
@@ -52,6 +65,13 @@ struct renderer
     void save_as_png();
     void render();
     void resize(int w, int h);
+    
+    enum device_type
+    {
+	    CPU = 0,
+	    GPU
+    };
+
 };
 
 } // namespace visionaray
