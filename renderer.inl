@@ -20,6 +20,9 @@ namespace visionaray
 template <typename host_ray_type>
 renderer<host_ray_type>::renderer()
     : host_sched(8)
+#ifdef __CUDACC__
+	, device_sched(8, 8)
+#endif
 {
     using namespace support;
 
@@ -118,13 +121,11 @@ void renderer<host_ray_type>::init(int argc, char** argv)
 
 #ifdef __CUDACC__
     // Copy scene to GPU
-    device_spheres = mod.primitives;
+    device_primitives = mod.primitives;
     device_materials = materials;
 
-    // Resize GPU render target
-    device_rt.resize(width, height);
+    device_bvh = cuda_index_bvh<model::primitive_type>(host_bvh);
 #endif
-
 }
 
 template <typename host_ray_type>
@@ -135,6 +136,11 @@ void renderer<host_ray_type>::resize(int w, int h)
     height = h;
     host_rt.resize(w, h);
     host_rt.clear_color_buffer();
+
+#ifdef __CUDACC__
+    device_rt.resize(w,h);
+    device_rt.clear_color_buffer();
+#endif
 
     cam.set_viewport(0, 0, w, h);
     cam.perspective(60.0f * constants::degrees_to_radians<float>(), float(w) / h, 0.1f, 100.0f);
@@ -149,10 +155,6 @@ void renderer<host_ray_type>::render()
     jps.spp     = spp;
     jps.sfactor = alpha;
     jps.dfactor = 1.0f - alpha;
-
-    using bvh_ref = index_bvh<model::primitive_type>::bvh_ref;
-    std::vector<bvh_ref> bvhs{host_bvh.ref()};
-    bvhs.push_back(host_bvh.ref());
 
     //directional_light<float> sunlight;
     //sunlight.set_cl(vec3(1.0f, 1.0f, 1.0f));
@@ -172,12 +174,49 @@ void renderer<host_ray_type>::render()
     headlight.set_linear_attenuation(0.0f);
     headlight.set_quadratic_attenuation(0.0f);
     std::vector<point_light<float>> lights{headlight};
+    
+#ifdef __CUDACC__
 
-    vec3* dummies = nullptr;
-    aligned_vector<vec3> dummy_textures;
+    if (dev_type == GPU)
+    {
+    
+    using bvh_ref = cuda_index_bvh<model::primitive_type>::bvh_ref;
+    thrust::device_vector<bvh_ref> bvhs;
+    bvhs.push_back(device_bvh.ref());
 
-    aligned_vector<index_bvh<basic_sphere<float>>::bvh_ref> refs;
-    refs.push_back(host_bvh.ref());
+    auto kparams = make_kernel_params(
+            normals_per_face_binding{},
+	    thrust::raw_pointer_cast(device_primitives.data()),
+	    thrust::raw_pointer_cast(device_primitives.data()) + device_primitives.size(),
+            (vec3*)nullptr,
+            (vec3*)nullptr,
+            thrust::raw_pointer_cast(device_materials.data()),
+            lights.data(),
+            lights.data() + lights.size(),
+            4,                          // number of reflective bounces
+            0.0001f,                     // epsilon to avoid self intersection by secondary rays
+            vec4(0.8f, 0.6f, 0.8f, 1.0f),
+            vec4(1.0f)
+            );
+    
+    pathtracing::kernel<decltype(kparams)> kernel;
+    kernel.params = kparams;
+
+    auto sparams = make_sched_params(jps, cam, device_rt);
+    device_sched.frame(kernel, sparams);
+   }
+
+   else
+
+#endif
+   {
+
+    using bvh_ref = index_bvh<model::primitive_type>::bvh_ref;
+    std::vector<bvh_ref> bvhs{host_bvh.ref()};
+    bvhs.push_back(host_bvh.ref());
+
+    //aligned_vector<index_bvh<basic_sphere<float>>::bvh_ref> refs;
+    //refs.push_back(host_bvh.ref());
 
     auto kparams = make_kernel_params(
             normals_per_face_binding{},
@@ -199,13 +238,28 @@ void renderer<host_ray_type>::render()
 
     auto sparams = make_sched_params(jps, cam, host_rt);
     host_sched.frame(kernel, sparams);
+   
+   }
+
 }
 
 template <typename host_ray_type>
 void renderer<host_ray_type>::save_as_png()
 {
     std::vector<vector<4, unorm<8>>> rgba(width * height);
-    memcpy(rgba.data(), host_rt.color(), width * height * 4);
+
+#ifdef __CUDACC__
+    if (dev_type == GPU)
+    {
+        // Copy the data from the GPU render target to the host vector
+        cudaMemcpy(rgba.data(), device_rt.color(), width * height * 4, cudaMemcpyDeviceToHost);
+    }
+    else
+#endif
+    {
+        // Copy data from the host render target
+        memcpy(rgba.data(), host_rt.color(), width * height * 4);
+    }
 
     std::vector<vector<3, unorm<8>>> rgb(width * height);
     for (size_t i = 0; i < rgb.size(); ++i)

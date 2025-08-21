@@ -41,10 +41,21 @@ struct renderer
     index_bvh<model::primitive_type> host_bvh;
 
 #ifdef __CUDACC__
+    enum device_type
+    {
+	    CPU = 0,
+	    GPU
+    };
+
     gpu_buffer_rt<PF_RGBA8, PF_UNSPECIFIED, PF_RGBA32F> device_rt;
-    cuda_sched<device_ray_type> device_sched;
-    thrust::device_vector<basic_sphere<float>> device_spheres;
+    cuda_sched<host_ray_type> device_sched;
+
+    thrust::device_vector<model::primitive_type> device_primitives;
     thrust::device_vector<plastic<float>> device_materials;
+
+    cuda_index_bvh<model::primitive_type> device_bvh;
+
+    device_type dev_type = GPU;
 #endif
     
     std::string png_filename = "rendered_snowman.png";
@@ -66,12 +77,6 @@ struct renderer
     void render();
     void resize(int w, int h);
     
-    enum device_type
-    {
-	    CPU = 0,
-	    GPU
-    };
-
 };
 
 } // namespace visionaray

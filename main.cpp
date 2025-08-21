@@ -17,9 +17,12 @@ int main(int argc, char** argv)
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     using host_ray_type = basic_ray<float>;
-    //using host_ray_type = basic_ray<simd::float4>
+#ifdef __CUDACC__
+    using device_ray_type = basic_ray<float>;
+#endif
+    //using host_ray_type = basic_ray<simd::float4>;
     //using host_ray_type = basic_ray<simd::float8>;
-    //using host_ray_type = basic_ray<simd::float16>
+    //using host_ray_type = basic_ray<simd::float16>;
 
 
     renderer<host_ray_type> rend;
@@ -45,15 +48,32 @@ int main(int argc, char** argv)
     int num_pixels = rend.width * rend.height * 4; // RGBA float buffer
     std::vector<float> local_buffer(num_pixels);
 
-    // Copy renderer buffer to float array
-    auto src = rend.host_rt.color(); // pointer to vector<4, unorm<8>>
-
-    for (int i = 0; i < rend.width * rend.height; ++i)
+#ifdef __CUDACC__
+    if (rend.dev_type == rend.GPU)
     {
-        local_buffer[4*i + 0] = float(src[i].x);
-        local_buffer[4*i + 1] = float(src[i].y);
-        local_buffer[4*i + 2] = float(src[i].z);
-        local_buffer[4*i + 3] = float(src[i].w);
+        // Copy the rendered image data from the GPU to the host buffer
+        std::vector<vector<4, unorm<8>>> host_rgba(rend.width * rend.height);
+        cudaMemcpy(host_rgba.data(), rend.device_rt.color(), rend.width * rend.height * 4, cudaMemcpyDeviceToHost);
+
+        for (int i = 0; i < rend.width * rend.height; ++i)
+        {
+            local_buffer[4*i + 0] = float(host_rgba[i].x);
+            local_buffer[4*i + 1] = float(host_rgba[i].y);
+            local_buffer[4*i + 2] = float(host_rgba[i].z);
+            local_buffer[4*i + 3] = float(host_rgba[i].w);
+        }
+    }
+    else
+#endif
+    {
+        auto src = rend.host_rt.color(); // pointer to vector<4, unorm<8>>
+        for (int i = 0; i < rend.width * rend.height; ++i)
+        {
+            local_buffer[4*i + 0] = float(src[i].x);
+            local_buffer[4*i + 1] = float(src[i].y);
+            local_buffer[4*i + 2] = float(src[i].z);
+            local_buffer[4*i + 3] = float(src[i].w);
+        }
     }
 
     std::vector<float> final_buffer;
