@@ -51,9 +51,10 @@ struct renderer
 
     size_t width = 512;
     size_t height = 512;
-    size_t spp = 8;
-    size_t num_threads = 8;
+    size_t spp = 128;
+    size_t num_threads = 1;
     unsigned frame_num = 0;
+    size_t alloc_mode = 3;
 
     std::vector<cmdline_option> options;
     support::cl::CmdLine cmd;

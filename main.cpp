@@ -43,7 +43,21 @@ int main(int argc, char** argv)
 
     // Gather results
     int num_pixels = rend.width * rend.height * 4; // RGBA float buffer
-    std::vector<float> local_buffer(num_pixels);
+    
+    float* local_buffer = nullptr;
+    std::vector<float> local_buffer_vec;
+
+    if (rend.alloc_mode == 1) {
+    	std::cout << "[WARN] Using malloc() without free\n";
+    	local_buffer = (float*)malloc(num_pixels * sizeof(float)); // assign to outer pointer
+    } else if (rend.alloc_mode == 2) {
+    	std::cout << "[INFO] Using malloc() with free\n";
+    	local_buffer = (float*)malloc(num_pixels * sizeof(float));
+    } else {
+    	std::cout << "[INFO] Using std::vector\n";
+    	local_buffer_vec.resize(num_pixels);
+    	local_buffer = local_buffer_vec.data();
+    }
 
     // Copy renderer buffer to float array
     auto src = rend.host_rt.color(); // pointer to vector<4, unorm<8>>
@@ -65,7 +79,7 @@ int main(int argc, char** argv)
     }
 
     MPI_Reduce(
-        local_buffer.data(),
+        local_buffer,
         recv_buf, // Correctly pass nullptr for non-root ranks
         num_pixels,
         MPI_FLOAT,
@@ -73,6 +87,10 @@ int main(int argc, char** argv)
         0,
         MPI_COMM_WORLD
     );
+
+    if (rend.alloc_mode == 2) {
+    	free(local_buffer);
+    }
 
     // Rank 0 averages and saves
     if (rank == 0) {
