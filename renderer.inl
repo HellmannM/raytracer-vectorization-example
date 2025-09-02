@@ -105,7 +105,7 @@ void renderer<host_ray_type>::init(int argc, char** argv)
 
     cmd.parse(args, false);
 
-    host_sched.reset(this->num_threads);
+    host_sched.reset(num_threads);
 
     mod.build_snowman();
     std::cout << "Scene bbox min: " << mod.bbox.min << " max: " << mod.bbox.max << "\n";

@@ -5,6 +5,9 @@
 #include <chrono>
 #include <iostream>
 #include <cstring>
+#include <thread>
+#include <mutex>
+#include <map>
 
 using namespace visionaray;
 
@@ -32,14 +35,13 @@ int main(int argc, char** argv)
 
     // Render locally
     auto compute_start_time = std::chrono::high_resolution_clock::now();
-    std::cout << "Render started on Rank: " << rank << std::endl;
     rend.render();
     MPI_Barrier(MPI_COMM_WORLD); // Wait for all ranks to finish
-    std::cout << "Renderer completed on Rank: " << rank << std::endl;
     auto compute_end_time = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> local_compute_duration = compute_end_time - compute_start_time;
     double local_compute_time = local_compute_duration.count();
+
 
     // Gather results
     int num_pixels = rend.width * rend.height * 4; // RGBA float buffer
