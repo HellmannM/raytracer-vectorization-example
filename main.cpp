@@ -16,6 +16,25 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+#ifdef __CUDACC__
+    int device_count = 0;
+    cudaGetDeviceCount(&device_count);
+
+    int local_rank = 0;
+    char* env = getenv("OMPI_COMM_WORLD_LOCAL_RANK");  // OpenMPI specific
+    if (env) {
+        local_rank = std::atoi(env);
+    }
+
+    int device_id = local_rank % device_count;
+    cudaSetDevice(device_id);
+
+    if (rank == 0) {
+        std::cout << "CUDA devices available: " << device_count << std::endl;
+    }
+    std::cout << "MPI rank " << rank << " mapped to GPU " << device_id << std::endl;
+#endif
+
     using host_ray_type = basic_ray<float>;
 #ifdef __CUDACC__
     using device_ray_type = basic_ray<float>;
