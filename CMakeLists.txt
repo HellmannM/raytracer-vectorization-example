@@ -7,16 +7,31 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ------------------------
+# User options
+# ------------------------
+option(ENABLE_CUDA "Build with CUDA support" OFF)
+
+# ------------------------
+# Dependencies
+# ------------------------
 find_package(Boost CONFIG COMPONENTS filesystem iostreams system REQUIRED)
 find_package(PNG REQUIRED)
 find_package(MPI REQUIRED)
 
-find_package(CUDA)
-if (CUDA_FOUND)
-  enable_language(CUDA)
-  set(VSNRAY_ENABLE_CUDA ON CACHE BOOL "Enable CUDA support")
+if (ENABLE_CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    enable_language(CUDA)
+    set(VSNRAY_ENABLE_CUDA ON)
+    message(STATUS "CUDA support enabled: ${CUDAToolkit_VERSION}")
+else()
+    set(VSNRAY_ENABLE_CUDA OFF)
+    message(STATUS "CUDA disabled")
 endif()
 
+# ------------------------
+# Executable
+# ------------------------
 add_executable(raytracer)
 
 set(COMMON_SOURCES
@@ -35,6 +50,7 @@ if (VSNRAY_ENABLE_CUDA)
         ${COMMON_SOURCES}
         main.cu
     )
+    set_property(TARGET raytracer PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 else()
     target_sources(raytracer PRIVATE
         ${COMMON_SOURCES}
@@ -42,6 +58,9 @@ else()
     )
 endif()
 
+# ------------------------
+# Includes
+# ------------------------
 target_include_directories(raytracer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/3rdparty/CmdLine/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/3rdparty/visionaray/include>
@@ -55,6 +74,9 @@ target_include_directories(raytracer PUBLIC
     ${MPI_CXX_INCLUDE_DIRS}
 )
 
+# ------------------------
+# Libraries
+# ------------------------
 target_link_libraries(raytracer PRIVATE
     Boost::disable_autolinking
     Boost::filesystem
@@ -63,10 +85,8 @@ target_link_libraries(raytracer PRIVATE
     ${MPI_CXX_LIBRARIES}
 )
 
-if (VSNRAY_ENABLE_CUDA)
-    target_link_libraries(raytracer PUBLIC visionaray visionaray_cuda)
-    set_property(TARGET raytracer PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-endif()
-
+# ------------------------
+# Definitions
+# ------------------------
 target_compile_definitions(raytracer PRIVATE GLEW_NO_GLU)
 
