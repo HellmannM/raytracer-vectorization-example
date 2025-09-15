@@ -54,10 +54,7 @@ int main(int argc, char** argv)
 
     // Render locally
     auto compute_start_time = std::chrono::high_resolution_clock::now();
-    std::cout << "Render started on Rank: " << rank << std::endl;
     rend.render();
-    MPI_Barrier(MPI_COMM_WORLD); // Wait for all ranks to finish
-    std::cout << "Renderer completed on Rank: " << rank << std::endl;
     auto compute_end_time = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> local_compute_duration = compute_end_time - compute_start_time;
@@ -65,12 +62,16 @@ int main(int argc, char** argv)
 
     // Gather results
     int num_pixels = rend.width * rend.height * 4; // RGBA float buffer
-    std::vector<float> local_buffer(num_pixels);
+    float* local_buffer = nullptr;
+    std::vector<float> local_buffer_vec;
 
 #ifdef __CUDACC__
     if (rend.dev_type == rend.GPU)
     {
-        // Copy the rendered image data from the GPU to the host buffer
+	local_buffer_vec.resize(num_pixels);
+	local_buffer = local_buffer_vec.data();
+
+	// Copy the rendered image data from the GPU to the host buffer
         std::vector<vector<4, unorm<8>>> host_rgba(rend.width * rend.height);
         cudaMemcpy(host_rgba.data(), rend.device_rt.color(), rend.width * rend.height * 4, cudaMemcpyDeviceToHost);
 
@@ -87,7 +88,19 @@ int main(int argc, char** argv)
     else
 #endif
     {
-        auto src = rend.host_rt.color(); // pointer to vector<4, unorm<8>>
+
+    	if (rend.alloc_mode == 1) {
+    		std::cout << "[WARN] Using malloc() without free\n";
+    		local_buffer = (float*)malloc(num_pixels * sizeof(float)); // assign to outer pointer
+    	} else if (rend.alloc_mode == 2) {
+    		std::cout << "[INFO] Using malloc() with free\n";
+    		local_buffer = (float*)malloc(num_pixels * sizeof(float));
+    	} else {
+    		std::cout << "[INFO] Using std::vector\n";
+    		local_buffer_vec.resize(num_pixels);
+    		local_buffer = local_buffer_vec.data();
+    	}
+	auto src = rend.host_rt.color(); // pointer to vector<4, unorm<8>>
         for (int i = 0; i < rend.width * rend.height; ++i)
         {
             local_buffer[4*i + 0] = float(src[i].x);
@@ -108,7 +121,7 @@ int main(int argc, char** argv)
     }
 
     MPI_Reduce(
-        local_buffer.data(),
+        local_buffer,
         recv_buf, // Correctly pass nullptr for non-root ranks
         num_pixels,
         MPI_FLOAT,
@@ -116,6 +129,10 @@ int main(int argc, char** argv)
         0,
         MPI_COMM_WORLD
     );
+
+    if (rend.alloc_mode == 2) {
+    	free(local_buffer);
+    }
 
     // Rank 0 averages and saves
     if (rank == 0) {

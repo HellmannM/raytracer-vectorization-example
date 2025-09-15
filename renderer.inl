@@ -65,6 +65,15 @@ renderer<host_ray_type>::renderer()
         cl::ArgRequired,
         cl::init(this->spp)
     ));
+
+    add_cmdline_option(cl::makeOption<size_t&>(
+    	cl::Parser<>(),
+    	"alloc_mode",
+    	cl::Desc("Allocation mode for local buffer: 1=malloc (no free, leak), 2=malloc+free, 3=std::vector"),
+    	cl::ArgRequired,
+    	cl::init(this->alloc_mode)
+    ));
+
 #ifdef __CUDACC__
     using namespace support;
     
@@ -102,7 +111,6 @@ void renderer<host_ray_type>::init(int argc, char** argv)
     host_sched.reset(this->num_threads);
 
     mod.build_snowman();
-    std::cout << "Scene bbox min: " << mod.bbox.min << " max: " << mod.bbox.max << "\n";
     for (unsigned i = 0; i < mod.primitives.size(); ++i)
     {
 	    mod.primitives[i].prim_id = i;
