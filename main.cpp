@@ -81,6 +81,8 @@ int main(int argc, char** argv)
             local_buffer[4*i + 2] = float(host_rgba[i].z);
             local_buffer[4*i + 3] = float(host_rgba[i].w);
         }
+
+	std::cout << "Rendered image from  GPU to CPU" << std::endl;
     }
     else
 #endif
@@ -93,6 +95,8 @@ int main(int argc, char** argv)
             local_buffer[4*i + 2] = float(src[i].z);
             local_buffer[4*i + 3] = float(src[i].w);
         }
+
+	std::cout << "Rendered image to CPU" << std::endl;
     }
 
     std::vector<float> final_buffer;

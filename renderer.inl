@@ -204,6 +204,7 @@ void renderer<host_ray_type>::render()
 
     auto sparams = make_sched_params(jps, cam, device_rt);
     device_sched.frame(kernel, sparams);
+    std::cout << "Computation with device" << std::endl;
    }
 
    else
@@ -238,6 +239,7 @@ void renderer<host_ray_type>::render()
 
     auto sparams = make_sched_params(jps, cam, host_rt);
     host_sched.frame(kernel, sparams);
+    std::cout << "Computation with host" << std::endl;
    
    }
 
