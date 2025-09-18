@@ -6,7 +6,6 @@ It supports both **CPU (MPI + thread pool)** and **GPU acceleration (via CUDA + 
 Each MPI rank renders a portion of the work, and results are reduced and combined into a final image.  
 When compiled with CUDA support, each MPI rank can be mapped to a dedicated GPU.
 
----
 
 ## Features
 - **CPU backend**: MPI ranks with Visionaray thread pool.  
@@ -15,7 +14,6 @@ When compiled with CUDA support, each MPI rank can be mapped to a dedicated GPU.
 - **PNG output**: Final image is written as PNG.  
 - **Performance metrics**: Reports min/max/avg compute time across ranks.  
 
----
 
 ## Dependencies
 - CMake ≥ 3.22  
@@ -27,8 +25,6 @@ When compiled with CUDA support, each MPI rank can be mapped to a dedicated GPU.
 - Visionaray headers (included in `3rdparty/visionaray`)  
 
 All required Visionaray header files are included and modified to reduce dependencies on GLEW/OpenGL.
-
----
 
 
 ## Build Instructions
@@ -42,21 +38,19 @@ cd ..
 mkdir build && cd build
 module load GCC/13.2.0 OpenMPI/4.1.6-GCC-13.2.0 CMake/3.27.6-GCCcore-13.2.0 Boost/1.83.0-GCC-13.2.0 libpng/1.6.40-GCCcore-13.2.0 CUDA/12.6.0
 ```
----
 
 ### CPU build
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CUDA=OFF ..
 make -j
 ```
----
 
 ### GPU build
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CUDA=ON ..
 make -j
 ```
----
+
 
 ## Command-line Options
 
@@ -76,17 +70,12 @@ The renderer supports the following command-line parameters:
 mpirun -n 4 ./build/raytracer -width=512 -height=512 -spp=128 -threads=1 -alloc_mod= 3 -png=snowman.png
 ```
 
----
 
 ## Scene Description
-
 - The **scene objects** (snowmen, materials) are defined in:`common/model.h`
-
 - The **rendering pipeline** (ray generation, camera setup,lighting and  sampling) is implemented in:`renderer.inl`
 
 This separation allows you to **modify the scene geometry independently** of the rendering logic.
-
----
 
 ### Default Scene
 
@@ -103,10 +92,7 @@ By default, the scene includes:
   - Positioned to view the snowmen from the front.  
   - Generates primary rays for each pixel.  
 - **Lighting**  
-  - A point light source illuminates the snowmen and casts soft shading.  
-
----
-
+  - A point light source illuminates the snowmen and casts soft shading.
 
 
 
