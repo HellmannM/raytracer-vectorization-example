@@ -63,7 +63,7 @@ The renderer supports the following command-line parameters:
 | `-height`      | Image height                         | 512                    |
 | `-threads`     | Number of CPU threads per MPI rank   | 1                      |
 | `-spp`         | Samples per pixel                    | 128                    |
-| `-alloc_mode`  | Allocation mode for                  | 3                      |
+| `-alloc_mode`  |Different allocation modes            | 3                      |
 
 ### Example usage
 ```bash
