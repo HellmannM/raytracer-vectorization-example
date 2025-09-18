@@ -69,7 +69,7 @@ renderer<host_ray_type>::renderer()
     add_cmdline_option(cl::makeOption<size_t&>(
     	cl::Parser<>(),
     	"alloc_mode",
-    	cl::Desc("Allocation mode for local buffer: 1=malloc (no free, leak), 2=malloc+free, 3=std::vector"),
+    	cl::Desc("Allocation mode for local buffer"),
     	cl::ArgRequired,
     	cl::init(this->alloc_mode)
     ));
@@ -212,7 +212,6 @@ void renderer<host_ray_type>::render()
 
     auto sparams = make_sched_params(jps, cam, device_rt);
     device_sched.frame(kernel, sparams);
-    std::cout << "Computation with device" << std::endl;
    }
 
    else
@@ -247,7 +246,6 @@ void renderer<host_ray_type>::render()
 
     auto sparams = make_sched_params(jps, cam, host_rt);
     host_sched.frame(kernel, sparams);
-    std::cout << "Computation with host" << std::endl;
    
    }
 

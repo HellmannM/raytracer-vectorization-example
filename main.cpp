@@ -90,13 +90,10 @@ int main(int argc, char** argv)
     {
 
     	if (rend.alloc_mode == 1) {
-    		std::cout << "[WARN] Using malloc() without free\n";
     		local_buffer = (float*)malloc(num_pixels * sizeof(float)); // assign to outer pointer
     	} else if (rend.alloc_mode == 2) {
-    		std::cout << "[INFO] Using malloc() with free\n";
     		local_buffer = (float*)malloc(num_pixels * sizeof(float));
     	} else {
-    		std::cout << "[INFO] Using std::vector\n";
     		local_buffer_vec.resize(num_pixels);
     		local_buffer = local_buffer_vec.data();
     	}
