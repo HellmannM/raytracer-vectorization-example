@@ -30,10 +30,8 @@ else()
 endif()
 
 # ------------------------
-# Executable
+# Common sources
 # ------------------------
-add_executable(raytracer)
-
 set(COMMON_SOURCES
     3rdparty/CmdLine/src/CmdLine.cpp
     3rdparty/CmdLine/src/CmdLineUtil.cpp
@@ -44,6 +42,11 @@ set(COMMON_SOURCES
     common/png_image.cpp
     common/sg.cpp
 )
+
+# ------------------------
+# Default executable
+# ------------------------
+add_executable(raytracer)
 
 if (VSNRAY_ENABLE_CUDA)
     target_sources(raytracer PRIVATE
@@ -59,7 +62,39 @@ else()
 endif()
 
 # ------------------------
-# Includes
+# CPU SIMD variants (float4, float8, float16)
+# Only for CPU builds, not CUDA
+# ------------------------
+if (NOT VSNRAY_ENABLE_CUDA)
+    foreach(SIMD_SIZE IN ITEMS 4 8 16)
+        set(TARGET_NAME "raytracer_float${SIMD_SIZE}")
+        add_executable(${TARGET_NAME} ${COMMON_SOURCES} main.cpp)
+        target_compile_definitions(${TARGET_NAME} PRIVATE USE_SIMD${SIMD_SIZE})
+        target_include_directories(${TARGET_NAME} PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/3rdparty/CmdLine/include>
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/3rdparty/visionaray/include>
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/3rdparty/GL>
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/common>
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/..>
+            ${Boost_INCLUDE_DIRS}
+            ${PNG_INCLUDE_DIRS}
+            ${MPI_CXX_INCLUDE_DIRS}
+        )
+        target_link_libraries(${TARGET_NAME} PRIVATE
+            Boost::disable_autolinking
+            Boost::filesystem
+            Boost::iostreams
+            PNG::PNG
+            ${MPI_CXX_LIBRARIES}
+        )
+        target_compile_definitions(${TARGET_NAME} PRIVATE GLEW_NO_GLU)
+    endforeach()
+endif()
+
+# ------------------------
+# Includes for default executable
 # ------------------------
 target_include_directories(raytracer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/3rdparty/CmdLine/include>
@@ -75,7 +110,7 @@ target_include_directories(raytracer PUBLIC
 )
 
 # ------------------------
-# Libraries
+# Libraries for default executable
 # ------------------------
 target_link_libraries(raytracer PRIVATE
     Boost::disable_autolinking
@@ -86,7 +121,7 @@ target_link_libraries(raytracer PRIVATE
 )
 
 # ------------------------
-# Definitions
+# Definitions for default executable
 # ------------------------
 target_compile_definitions(raytracer PRIVATE GLEW_NO_GLU)
 

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cstring>
 
+
 using namespace visionaray;
 
 int main(int argc, char** argv)
@@ -35,15 +36,21 @@ int main(int argc, char** argv)
     std::cout << "MPI rank " << rank << " mapped to GPU " << device_id << std::endl;
 #endif
 
-    using host_ray_type = basic_ray<float>;
 #ifdef __CUDACC__
     using device_ray_type = basic_ray<float>;
 #endif
-    //using host_ray_type = basic_ray<simd::float4>;
-    //using host_ray_type = basic_ray<simd::float8>;
-    //using host_ray_type = basic_ray<simd::float16>;
 
-
+// CPU build: use SIMD based on compile-time define
+#ifdef USE_SIMD4
+    using host_ray_type = basic_ray<simd::float4>;
+#elif defined(USE_SIMD8)
+    using host_ray_type = basic_ray<simd::float8>;
+#elif defined(USE_SIMD16)
+    using host_ray_type = basic_ray<simd::float16>;
+#else
+    using host_ray_type = basic_ray<float>;
+#endif
+    
     renderer<host_ray_type> rend;
     rend.init(argc, argv);
 
