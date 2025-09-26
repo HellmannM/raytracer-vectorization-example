@@ -45,11 +45,36 @@ cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CUDA=OFF ..
 make -j
 ```
 
+#### Executable variants
+
+After building, the following binaries are available on CPU configuration:
+
+These targets use different `host_ray_type` vectorization options. Only CPU builds support SIMD variants.  
+
+| Target Name          | Description                                                                |
+| -------------------- | -------------------------------------------------------------------------- |
+| `raytracer`          | Default CPU build using scalar floats (`basic_ray<float>`).                |
+| `raytracer_float4`   | CPU build using `simd::float4` rays (4-wide SIMD vectors).                 |
+| `raytracer_float8`   | CPU build using `simd::float8` rays (8-wide SIMD vectors).                 |
+| `raytracer_float16`  | CPU build using `simd::float16` rays (16-wide SIMD vectors).               |
+
+- Scalar (`raytracer`) is built by default if no SIMD option is provided.
+- `make -j` command builds all targets (`raytracer`, `raytracer_float4`, `raytracer_float8`, `raytracer_float16`) at once.
+
+
 ### GPU build
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CUDA=ON ..
 make -j
 ```
+
+#### Executable variants
+
+The GPU build always uses scalar rays (`basic_ray<float>`) for both host and device.
+
+| Target Name	| Description                                                                       |
+|---------------| --------------------------------------------------------------------------------- |
+| `raytracer`	| Default GPU build using CUDA. Each MPI rank maps to a dedicated GPU               |
 
 
 ## Command-line Options
